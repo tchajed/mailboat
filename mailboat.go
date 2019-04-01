@@ -3,6 +3,8 @@ package mailboat
 import (
 	"github.com/tchajed/goose/machine"
 	"github.com/tchajed/goose/machine/filesys"
+
+	"github.com/tchajed/mailboat/globals"
 )
 
 type partialFile struct {
@@ -15,6 +17,8 @@ func getUserDir(user uint64) string {
 }
 
 const SpoolDir = "spool"
+
+const NumUsers uint64 = 100
 
 func readMessage(userDir string, name string) []byte {
 	f := filesys.Open(userDir, name)
@@ -40,7 +44,9 @@ type Message struct {
 
 // Pickup reads all stored messages
 func Pickup(user uint64) []Message {
-	// TODO: acquire pickup/delete lock
+	ls := globals.Get()
+	l := ls[user]
+	l.Lock()
 	userDir := getUserDir(user)
 	names := filesys.List(userDir)
 	messages := new([]Message)
@@ -59,6 +65,7 @@ func Pickup(user uint64) []Message {
 		continue
 	}
 	msgs := *messages
+	l.Unlock()
 	return msgs
 }
 
@@ -119,12 +126,16 @@ func Deliver(user uint64, msg []byte) {
 }
 
 func Delete(user uint64, msgID string) {
-	// TODO: acquire pickup/delete lock
+	ls := globals.Get()
+	l := ls[user]
+	l.Lock()
 	userDir := getUserDir(user)
 	filesys.Delete(userDir, msgID)
+	l.Unlock()
 }
 
 func Recover() {
+	globals.Init(NumUsers)
 	spooled := filesys.List(SpoolDir)
 	for i := uint64(0); ; {
 		if i == uint64(len(spooled)) {

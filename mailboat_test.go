@@ -5,6 +5,8 @@ import (
 
 	"github.com/stretchr/testify/suite"
 	"github.com/tchajed/goose/machine/filesys"
+
+	"github.com/tchajed/mailboat/globals"
 )
 
 type MailboatSuite struct {
@@ -14,9 +16,15 @@ type MailboatSuite struct {
 func (suite *MailboatSuite) SetupTest() {
 	filesys.Fs = filesys.NewMemFs()
 	filesys.Fs.Mkdir(SpoolDir)
-	for uid := uint64(0); uid < 100; uid++ {
+	for uid := uint64(0); uid < NumUsers; uid++ {
 		filesys.Fs.Mkdir(getUserDir(uid))
 	}
+
+	globals.Init(NumUsers)
+}
+
+func (suite *MailboatSuite) TearDownTest() {
+	globals.Shutdown()
 }
 
 func TestMailboatSuite(t *testing.T) {
@@ -71,6 +79,7 @@ func (suite *MailboatSuite) TestRecoverQuiescent() {
 	Deliver(0, msg1)
 	Deliver(0, msg2)
 	suite.ElementsMatch([][]byte{msg1, msg2}, suite.messageContents(Pickup(0)))
+	globals.Shutdown()
 	Recover()
 	suite.ElementsMatch([][]byte{msg1, msg2}, suite.messageContents(Pickup(0)))
 }

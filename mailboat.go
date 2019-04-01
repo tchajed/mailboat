@@ -14,6 +14,8 @@ func getUserDir(user uint64) string {
 	return "user" + machine.UInt64ToString(user)
 }
 
+const SpoolDir = "spool"
+
 func readMessage(userDir string, name string) []byte {
 	f := filesys.Open(userDir, name)
 	fileContents := new([]byte)
@@ -66,7 +68,7 @@ func createTmp() (filesys.File, string) {
 	finalName := new(string)
 	for id := initID; ; {
 		fname := machine.UInt64ToString(id)
-		f, ok := filesys.Create("tmp", fname)
+		f, ok := filesys.Create(SpoolDir, fname)
 		if ok {
 			*finalFile = f
 			*finalName = fname
@@ -103,7 +105,7 @@ func Deliver(user uint64, msg []byte) {
 	tmpName := writeTmp(msg)
 	initID := machine.RandomUint64()
 	for id := initID; ; {
-		ok := filesys.Link("spool", tmpName,
+		ok := filesys.Link(SpoolDir, tmpName,
 			userDir, "msg"+machine.UInt64ToString(id))
 		if ok {
 			break
@@ -113,7 +115,7 @@ func Deliver(user uint64, msg []byte) {
 			continue
 		}
 	}
-	filesys.Delete("spool", tmpName)
+	filesys.Delete(SpoolDir, tmpName)
 }
 
 func Delete(user uint64, msgID string) {
@@ -123,13 +125,13 @@ func Delete(user uint64, msgID string) {
 }
 
 func Recover() {
-	spooled := filesys.List("spool")
+	spooled := filesys.List(SpoolDir)
 	for i := uint64(0); ; {
 		if i == uint64(len(spooled)) {
 			break
 		}
 		name := spooled[i]
-		filesys.Delete("spool", name)
+		filesys.Delete(SpoolDir, name)
 		i = i + 1
 		continue
 	}

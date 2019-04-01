@@ -1,6 +1,8 @@
 package mailboat
 
 import (
+	"sync"
+
 	"github.com/tchajed/goose/machine"
 	"github.com/tchajed/goose/machine/filesys"
 
@@ -44,7 +46,7 @@ type Message struct {
 
 // Pickup reads all stored messages
 func Pickup(user uint64) []Message {
-	ls := globals.Get()
+	ls := globals.GetX()
 	l := ls[user]
 	l.Lock()
 	userDir := getUserDir(user)
@@ -126,7 +128,7 @@ func Deliver(user uint64, msg []byte) {
 }
 
 func Delete(user uint64, msgID string) {
-	ls := globals.Get()
+	ls := globals.GetX()
 	l := ls[user]
 	l.Lock()
 	userDir := getUserDir(user)
@@ -134,8 +136,25 @@ func Delete(user uint64, msgID string) {
 	l.Unlock()
 }
 
+func initLocks() {
+	locks := new([]*sync.RWMutex)
+	for i := uint64(0); ; {
+		if i == NumUsers {
+			break
+		}
+		oldLocks := *locks
+		l := new(sync.RWMutex)
+		newLocks := append(oldLocks, l)
+		*locks = newLocks
+		i = i + 1
+		continue
+	}
+	finalLocks := *locks
+	globals.SetX(finalLocks)
+}
+
 func Recover() {
-	globals.Init(NumUsers)
+	initLocks()
 	spooled := filesys.List(SpoolDir)
 	for i := uint64(0); ; {
 		if i == uint64(len(spooled)) {

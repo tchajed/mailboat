@@ -44,7 +44,7 @@ type Message struct {
 	Contents []byte
 }
 
-// Pickup reads all stored messages
+// Pickup reads all stored messages and acquires a per-user lock.
 func Pickup(user uint64) []Message {
 	ls := globals.GetX()
 	l := ls[user]
@@ -67,7 +67,6 @@ func Pickup(user uint64) []Message {
 		continue
 	}
 	msgs := *messages
-	l.Unlock()
 	return msgs
 }
 
@@ -108,7 +107,7 @@ func writeTmp(data []byte) string {
 	return name
 }
 
-// Deliver stores a new message
+// Deliver stores a new message. Does not require holding the lock.
 func Deliver(user uint64, msg []byte) {
 	userDir := getUserDir(user)
 	tmpName := writeTmp(msg)
@@ -127,12 +126,16 @@ func Deliver(user uint64, msg []byte) {
 	filesys.Delete(SpoolDir, tmpName)
 }
 
+// Delete deletes a message for the current user.
+// Requires that the user previously acquired the lock with Pickup.
 func Delete(user uint64, msgID string) {
-	ls := globals.GetX()
-	l := ls[user]
-	l.Lock()
 	userDir := getUserDir(user)
 	filesys.Delete(userDir, msgID)
+}
+
+func Unlock(user uint64) {
+	locks := globals.GetX()
+	l := locks[user]
 	l.Unlock()
 }
 

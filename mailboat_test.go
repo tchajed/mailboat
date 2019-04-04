@@ -47,12 +47,18 @@ func (suite *MailboatSuite) messageContents(msgs []Message) (contents [][]byte) 
 	return
 }
 
+func (suite *MailboatSuite) pickup(user uint64) [][]byte {
+	msgs := Pickup(user)
+	Unlock(user)
+	return suite.messageContents(msgs)
+}
+
 func (suite *MailboatSuite) TestDeliverPickup() {
 	Deliver(0, msg1)
 	Deliver(0, msg2)
-	msgs := suite.messageContents(Pickup(0))
+	msgs := suite.pickup(0)
 	suite.ElementsMatch([][]byte{msg1, msg2}, msgs)
-	suite.ElementsMatch(nil, suite.messageContents(Pickup(1)))
+	suite.ElementsMatch(nil, suite.pickup(1))
 }
 
 func (suite *MailboatSuite) TestDeliverPickupMultipleUsers() {
@@ -60,9 +66,9 @@ func (suite *MailboatSuite) TestDeliverPickupMultipleUsers() {
 	Deliver(1, msg2)
 	Deliver(0, msg2)
 	Deliver(2, msg1)
-	suite.ElementsMatch([][]byte{msg1, msg2}, suite.messageContents(Pickup(0)))
-	suite.ElementsMatch([][]byte{msg2}, suite.messageContents(Pickup(1)))
-	suite.ElementsMatch([][]byte{msg1}, suite.messageContents(Pickup(2)))
+	suite.ElementsMatch([][]byte{msg1, msg2}, suite.pickup(0))
+	suite.ElementsMatch([][]byte{msg2}, suite.pickup(1))
+	suite.ElementsMatch([][]byte{msg1}, suite.pickup(2))
 }
 
 func (suite *MailboatSuite) TestDeliverDelete() {
@@ -71,15 +77,16 @@ func (suite *MailboatSuite) TestDeliverDelete() {
 	Deliver(1, msg2)
 	user1Messages := Pickup(1)
 	Delete(1, user1Messages[0].Id)
-	suite.ElementsMatch([][]byte{msg1, msg2}, suite.messageContents(Pickup(0)))
-	suite.ElementsMatch(nil, suite.messageContents(Pickup(1)))
+	Unlock(1)
+	suite.ElementsMatch([][]byte{msg1, msg2}, suite.pickup(0))
+	suite.ElementsMatch(nil, suite.pickup(1))
 }
 
 func (suite *MailboatSuite) TestRecoverQuiescent() {
 	Deliver(0, msg1)
 	Deliver(0, msg2)
-	suite.ElementsMatch([][]byte{msg1, msg2}, suite.messageContents(Pickup(0)))
+	suite.ElementsMatch([][]byte{msg1, msg2}, suite.pickup(0))
 	globals.Shutdown()
 	Recover()
-	suite.ElementsMatch([][]byte{msg1, msg2}, suite.messageContents(Pickup(0)))
+	suite.ElementsMatch([][]byte{msg1, msg2}, suite.pickup(0))
 }

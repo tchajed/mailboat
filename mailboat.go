@@ -107,7 +107,8 @@ func writeTmp(data []byte) string {
 	return name
 }
 
-// Deliver stores a new message. Does not require holding the lock.
+// Deliver stores a new message.
+// Does not require holding the per-user pickup/delete lock.
 func Deliver(user uint64, msg []byte) {
 	userDir := getUserDir(user)
 	tmpName := writeTmp(msg)
@@ -127,12 +128,13 @@ func Deliver(user uint64, msg []byte) {
 }
 
 // Delete deletes a message for the current user.
-// Requires that the user previously acquired the lock with Pickup.
+// Requires the per-user lock, acquired with pickup.
 func Delete(user uint64, msgID string) {
 	userDir := getUserDir(user)
 	filesys.Delete(userDir, msgID)
 }
 
+// Unlock releases the lock for the current user.
 func Unlock(user uint64) {
 	locks := globals.GetX()
 	l := locks[user]

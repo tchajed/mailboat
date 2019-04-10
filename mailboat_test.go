@@ -61,6 +61,21 @@ func (suite *MailboatSuite) TestDeliverPickup() {
 	suite.ElementsMatch(nil, suite.pickup(1))
 }
 
+func (suite *MailboatSuite) TestDeliverPickupLargeMessages() {
+	largeMsg := make([]byte, 4096+20)
+	for i := range largeMsg {
+		largeMsg[i] = byte(i % 256)
+	}
+	largeMsg2 := make([]byte, 4096*3)
+	for i := range largeMsg {
+		largeMsg[i] = byte(i % 256)
+	}
+	Deliver(0, largeMsg)
+	Deliver(0, largeMsg2)
+	msgs := suite.pickup(0)
+	suite.ElementsMatch([][]byte{largeMsg, largeMsg2}, msgs)
+}
+
 func (suite *MailboatSuite) TestDeliverPickupMultipleUsers() {
 	Deliver(0, msg1)
 	Deliver(1, msg2)

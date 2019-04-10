@@ -33,7 +33,7 @@ func readMessage(userDir string, name string) []byte {
 			*fileContents = newData
 			break
 		}
-		pf = partialFile{off: pf.off, data: newData}
+		pf = partialFile{off: pf.off + uint64(len(buf)), data: newData}
 		continue
 	}
 	fileData := *fileContents

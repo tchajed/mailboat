@@ -25,7 +25,8 @@ const NumUsers uint64 = 100
 func readMessage(userDir string, name string) []byte {
 	f := filesys.Open(userDir, name)
 	fileContents := new([]byte)
-	for pf := (partialFile{off: 0, data: nil}); ; {
+	initData := make([]byte, 0)
+	for pf := (partialFile{off: 0, data: initData}); ; {
 		buf := filesys.ReadAt(f, pf.off, 4096)
 		newData := append(pf.data, buf...)
 		if uint64(len(buf)) < 4096 {

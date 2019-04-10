@@ -22,7 +22,7 @@ const SpoolDir = "spool"
 
 const NumUsers uint64 = 100
 
-func readMessage(userDir string, name string) []byte {
+func readMessage(userDir string, name string) string {
 	f := filesys.Open(userDir, name)
 	fileContents := new([]byte)
 	initData := make([]byte, 0)
@@ -37,12 +37,13 @@ func readMessage(userDir string, name string) []byte {
 		continue
 	}
 	fileData := *fileContents
-	return fileData
+	fileStr := string(fileData)
+	return fileStr
 }
 
 type Message struct {
 	Id       string
-	Contents []byte
+	Contents string
 }
 
 // Pickup reads all stored messages and acquires a per-user lock.

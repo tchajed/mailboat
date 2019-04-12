@@ -137,6 +137,13 @@ func Delete(user uint64, msgID string) {
 }
 
 // Unlock releases the lock for the current user.
+func Lock(user uint64) {
+	locks := globals.GetX()
+	l := locks[user]
+	l.Lock()
+}
+
+// Unlock releases the lock for the current user.
 func Unlock(user uint64) {
 	locks := globals.GetX()
 	l := locks[user]

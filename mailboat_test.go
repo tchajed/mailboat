@@ -132,10 +132,12 @@ func do_bench_loop(tid int, msg string, niter int, nsmtpiter int, npopiter int) 
 		for i := 0; i < npopiter; i++ {
 			u := uint64(r.Int()) % NumUsers
 			msgs := Pickup(u)
-			for _, m := range msgs {
-				Delete(u, m.Id)
-			}
 			Unlock(u)
+			for _, m := range msgs {
+				Lock(u)
+				Delete(u, m.Id)
+				Unlock(u)
+			}
 		}
 	}
 	return nil

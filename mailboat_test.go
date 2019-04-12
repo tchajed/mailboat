@@ -7,6 +7,13 @@ import (
 	"github.com/tchajed/goose/machine/filesys"
 
 	"github.com/tchajed/mailboat/globals"
+
+	"fmt"
+	"math/rand"
+	"os"
+	"strconv"
+	"sync"
+	"time"
 )
 
 type MailboatSuite struct {
@@ -112,4 +119,67 @@ func (suite *MailboatSuite) TestRecoverQuiescent() {
 	globals.Shutdown()
 	Recover()
 	suite.MessagesMatch([][]byte{msg1, msg2}, suite.pickup(0))
+}
+
+// Pick up is different from gomail, which only retrieves msgids
+func do_bench_loop(tid int, msg string, niter int, nsmtpiter int, npopiter int) error {
+	r := rand.New(rand.NewSource(time.Now().UnixNano()))
+	for l := 0; l < niter; l++ {
+		for i := 0; i < nsmtpiter; i++ {
+			u := uint64(r.Int()) % NumUsers
+			Deliver(u, []byte(msg))
+		}
+		for i := 0; i < npopiter; i++ {
+			u := uint64(r.Int()) % NumUsers
+			msgs := Pickup(u)
+			for _, m := range msgs {
+				Delete(u, m.Id)
+			}
+			Unlock(u)
+		}
+	}
+	return nil
+}
+
+func TestMixedLoad(t *testing.T) {
+	filesys.Fs = filesys.NewMemFs()
+	filesys.Fs.Mkdir(SpoolDir)
+	for uid := uint64(0); uid < NumUsers; uid++ {
+		filesys.Fs.Mkdir(getUserDir(uid))
+	}
+
+	globals.Init(NumUsers)
+
+	nprocEnv := os.Getenv("GOMAIL_NPROC")
+	nproc64, err := strconv.ParseInt(nprocEnv, 10, 64)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	niterEnv := os.Getenv("GOMAIL_NITER")
+	niter64, err := strconv.ParseInt(niterEnv, 10, 64)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	nproc := int(nproc64)
+	niter := int(niter64)
+
+	var wg sync.WaitGroup
+	start := time.Now()
+	wg.Add(nproc)
+	for g := 0; g < nproc; g++ {
+		go func(g int) {
+			defer wg.Done()
+			err := do_bench_loop(g, "Hello world.", niter, 1, 1)
+			if err != nil {
+				t.Fatal(err)
+			}
+		}(g)
+	}
+	wg.Wait()
+
+	end := time.Now()
+	elapsed := end.Sub(start)
+	fmt.Printf("%d threads, %d iter, %v elapsed\n", nproc, niter, elapsed)
 }

@@ -152,6 +152,8 @@ func Unlock(user uint64) {
 
 func initLocks() {
 	locks := new([]*sync.RWMutex)
+	initLocks := make([]*sync.RWMutex, 0)
+	*locks = initLocks
 	for i := uint64(0); ; {
 		if i == NumUsers {
 			break

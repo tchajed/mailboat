@@ -153,12 +153,18 @@ func TestMixedLoad(t *testing.T) {
 	globals.Init(NumUsers)
 
 	nprocEnv := os.Getenv("GOMAIL_NPROC")
+	if nprocEnv == "" {
+		nprocEnv = "1"
+	}
 	nproc64, err := strconv.ParseInt(nprocEnv, 10, 64)
 	if err != nil {
 		t.Fatal(err)
 	}
 
 	niterEnv := os.Getenv("GOMAIL_NITER")
+	if niterEnv == "" {
+		niterEnv = "1000"
+	}
 	niter64, err := strconv.ParseInt(niterEnv, 10, 64)
 	if err != nil {
 		t.Fatal(err)

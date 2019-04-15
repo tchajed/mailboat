@@ -27,7 +27,7 @@ func (suite *MailboatSuite) SetupTest() {
 		filesys.Fs.Mkdir(getUserDir(uid))
 	}
 
-	globals.Init(NumUsers)
+	Open()
 }
 
 func (suite *MailboatSuite) TearDownTest() {
@@ -118,6 +118,7 @@ func (suite *MailboatSuite) TestRecoverQuiescent() {
 	suite.MessagesMatch([][]byte{msg1, msg2}, suite.pickup(0))
 	globals.Shutdown()
 	Recover()
+	Open()
 	suite.MessagesMatch([][]byte{msg1, msg2}, suite.pickup(0))
 }
 
@@ -150,7 +151,7 @@ func TestMixedLoad(t *testing.T) {
 		filesys.Fs.Mkdir(getUserDir(uid))
 	}
 
-	globals.Init(NumUsers)
+	Open()
 
 	nprocEnv := os.Getenv("GOMAIL_NPROC")
 	if nprocEnv == "" {

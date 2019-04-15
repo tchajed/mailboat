@@ -22,17 +22,6 @@ func GetX() []*sync.RWMutex {
 	return locks
 }
 
-// Init initializes locks for a number of users
-//
-// Only for the convenience of Go initialization (not modeled in GoLayer).
-func Init(numUsers uint64) {
-	var ls []*sync.RWMutex
-	for i := uint64(0); i < numUsers; i++ {
-		ls = append(ls, new(sync.RWMutex))
-	}
-	SetX(ls)
-}
-
 // Shutdown simulates a crash, returning globals to an uninitialized state.
 func Shutdown() {
 	locks = nil

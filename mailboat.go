@@ -150,7 +150,7 @@ func Unlock(user uint64) {
 	l.Unlock()
 }
 
-func initLocks() {
+func Open() {
 	locks := new([]*sync.RWMutex)
 	initLocks := make([]*sync.RWMutex, 0)
 	*locks = initLocks
@@ -170,7 +170,6 @@ func initLocks() {
 }
 
 func Recover() {
-	initLocks()
 	spooled := filesys.List(SpoolDir)
 	for i := uint64(0); ; {
 		if i == uint64(len(spooled)) {

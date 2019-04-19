@@ -38,6 +38,7 @@ func readMessage(userDir string, name string) string {
 	}
 	fileData := *fileContents
 	fileStr := string(fileData)
+	filesys.Close(f)
 	return fileStr
 }
 

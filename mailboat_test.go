@@ -133,23 +133,17 @@ func do_bench_loop(tid int, msg string, niter int, nsmtpiter int, npopiter int) 
 		for i := 0; i < npopiter; i++ {
 			u := uint64(r.Int()) % NumUsers
 			msgs := Pickup(u)
-			Unlock(u)
 			for _, m := range msgs {
-				Lock(u)
-				Delete(u, m.Id)
-				Unlock(u)
+			    Delete(u, m.Id)
 			}
+			Unlock(u)
 		}
 	}
 	return nil
 }
 
 func TestMixedLoad(t *testing.T) {
-	filesys.Fs = filesys.NewMemFs()
-	filesys.Fs.Mkdir(SpoolDir)
-	for uid := uint64(0); uid < NumUsers; uid++ {
-		filesys.Fs.Mkdir(getUserDir(uid))
-	}
+	filesys.Fs = filesys.NewDirFs("/tmp/mailboat/")
 
 	Open()
 

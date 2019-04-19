@@ -8,7 +8,6 @@ echo "== gomail $NPROC $NMSG $N `date` == "
 for i in `seq 1 $NPROC`;
 do
     echo "== gomail $i $((N / i))"
-    ./mk-users.sh
     ( GOMAIL_NPROC=$i GOMAIL_NITER=$((N / i)) go test -v -run Mixed)
     sleep 1
 done    

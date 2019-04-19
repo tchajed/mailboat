@@ -1,5 +1,8 @@
 #!/bin/bash
 
+DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd )"
+cd "$DIR/.." || exit
+
 NPROC=$1
 NMSG=100000
 N=$(($NMSG * $NPROC))
@@ -8,7 +11,6 @@ echo "== gomail $NPROC $NMSG $N `date` == "
 for i in `seq 1 $NPROC`;
 do
     echo "== gomail $i $((N / i))"
-    ( GOMAIL_NPROC=$i GOMAIL_NITER=$((N / i)) ./bench)
+    ( GOMAIL_NPROC=$i GOMAIL_NITER=$((N / i)) go run ./cmd/mailboat-bench)
     sleep 1
-done    
-
+done

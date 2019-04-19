@@ -6,4 +6,4 @@ Mailboat is a qmail-like mail server with a proof in [Armada](https://github.com
 
 ## Benchmarking
 
-Run `./run-mailboat.sh` to run a mixed-workload benchmark, which is output from the test `TestMixedLoad`.
+Run `./scripts/run-mailboat.sh` to run a mixed-workload benchmark, which is output from the test `TestMixedLoad`.

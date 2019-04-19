@@ -24,7 +24,7 @@ func (suite *MailboatSuite) SetupTest() {
 	filesys.Fs = filesys.NewMemFs()
 	filesys.Fs.Mkdir(SpoolDir)
 	for uid := uint64(0); uid < NumUsers; uid++ {
-		filesys.Fs.Mkdir(getUserDir(uid))
+		filesys.Fs.Mkdir(GetUserDir(uid))
 	}
 
 	Open()
@@ -148,7 +148,7 @@ func TestMixedLoad(t *testing.T) {
 	filesys.Fs = filesys.NewDirFs("/tmp/mailboat/")
 	filesys.Fs.Mkdir(SpoolDir)
 	for uid := uint64(0); uid < NumUsers; uid++ {
-		filesys.Fs.Mkdir(getUserDir(uid))
+		filesys.Fs.Mkdir(GetUserDir(uid))
 	}
 
 	Open()

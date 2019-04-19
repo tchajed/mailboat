@@ -14,7 +14,7 @@ type partialFile struct {
 	data []byte
 }
 
-func getUserDir(user uint64) string {
+func GetUserDir(user uint64) string {
 	return "user" + machine.UInt64ToString(user)
 }
 
@@ -52,7 +52,7 @@ func Pickup(user uint64) []Message {
 	ls := globals.GetX()
 	l := ls[user]
 	l.Lock()
-	userDir := getUserDir(user)
+	userDir := GetUserDir(user)
 	names := filesys.List(userDir)
 	messages := new([]Message)
 	initMessages := make([]Message, 0)
@@ -113,7 +113,7 @@ func writeTmp(data []byte) string {
 // Deliver stores a new message.
 // Does not require holding the per-user pickup/delete lock.
 func Deliver(user uint64, msg []byte) {
-	userDir := getUserDir(user)
+	userDir := GetUserDir(user)
 	tmpName := writeTmp(msg)
 	initID := machine.RandomUint64()
 	for id := initID; ; {
@@ -133,7 +133,7 @@ func Deliver(user uint64, msg []byte) {
 // Delete deletes a message for the current user.
 // Requires the per-user lock, acquired with pickup.
 func Delete(user uint64, msgID string) {
-	userDir := getUserDir(user)
+	userDir := GetUserDir(user)
 	filesys.Delete(userDir, msgID)
 }
 

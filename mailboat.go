@@ -27,9 +27,9 @@ func readMessage(userDir string, name string) string {
 	fileContents := new([]byte)
 	initData := make([]byte, 0)
 	for pf := (partialFile{off: 0, data: initData}); ; {
-		buf := filesys.ReadAt(f, pf.off, 4096)
+		buf := filesys.ReadAt(f, pf.off, 512)
 		newData := append(pf.data, buf...)
-		if uint64(len(buf)) < 4096 {
+		if uint64(len(buf)) < 512 {
 			*fileContents = newData
 			break
 		}

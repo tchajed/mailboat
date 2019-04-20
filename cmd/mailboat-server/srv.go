@@ -50,7 +50,7 @@ func (msg *Message) process_msg(tid int) error {
 	for _, s := range msg.Data {
 		buffer.WriteString(s)
 	}
-	b := []byte(buffer.String())
+	b := buffer.Bytes()
 
 	mailboat.Deliver(nameToU(msg.To), b)
 	return nil
@@ -150,11 +150,11 @@ type mailbox struct {
 	u    string
 	id   uint64
 	msgs []mailboat.Message
-	fd   int
 }
 
 func mkMailbox(u string) (*mailbox, error) {
-	mbox := &mailbox{u: u, id: nameToU(u)}
+	userId := nameToU(u)
+	mbox := &mailbox{u: u, id: userId, msgs: mailboat.Pickup(userId)}
 	return mbox, nil
 }
 
@@ -242,7 +242,6 @@ func process_pop(c net.Conn, tid int) {
 				break
 			}
 			tw.PrintfLine("+OK")
-			mbox.msgs = mailboat.Pickup(mbox.id)
 			for i, msg := range mbox.msgs {
 				tw.PrintfLine("%d %d", i, len(msg.Contents))
 			}
@@ -285,6 +284,7 @@ func process_pop(c net.Conn, tid int) {
 			tw.PrintfLine("+OK")
 			break
 		default:
+			mbox.unlock()
 			tw.PrintfLine("-ERR")
 			break
 		}

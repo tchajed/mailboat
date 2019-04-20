@@ -1,6 +1,9 @@
 package main
 
 import (
+	"flag"
+	"runtime"
+
 	"github.com/tchajed/goose/machine/filesys"
 	"github.com/tchajed/mailboat"
 
@@ -34,6 +37,9 @@ func do_bench_loop(tid int, msg string, niter int, nsmtpiter int, npopiter int) 
 	return nil
 }
 
+var cpuprofile = flag.String("cpuprofile", "", "write cpu profile to `file`")
+var memprofile = flag.String("memprofile", "", "write memory profile to `file`")
+
 func main() {
 	os.RemoveAll("/tmp/mailboat")
 	os.MkdirAll("/tmp/mailboat", 0744)
@@ -63,15 +69,21 @@ func main() {
 		log.Fatal(err)
 	}
 
-        f, err := os.Create("prof")
-        if err != nil {
-            log.Fatal(err)
-        }
-        pprof.StartCPUProfile(f)
-        defer pprof.StopCPUProfile()
-
 	nproc := int(nproc64)
 	niter := int(niter64)
+
+	flag.Parse()
+	if *cpuprofile != "" {
+		f, err := os.Create(*cpuprofile)
+		if err != nil {
+			log.Fatal("could not create CPU profile: ", err)
+		}
+		defer f.Close()
+		if err := pprof.StartCPUProfile(f); err != nil {
+			log.Fatal("could not start CPU profile: ", err)
+		}
+		defer pprof.StopCPUProfile()
+	}
 
 	var wg sync.WaitGroup
 	start := time.Now()
@@ -90,4 +102,16 @@ func main() {
 	end := time.Now()
 	elapsed := end.Sub(start)
 	fmt.Printf("%d threads, %d iter, %v elapsed\n", nproc, niter, elapsed)
+
+	if *memprofile != "" {
+		f, err := os.Create(*memprofile)
+		if err != nil {
+			log.Fatal("could not create memory profile: ", err)
+		}
+		defer f.Close()
+		runtime.GC() // get up-to-date statistics
+		if err := pprof.WriteHeapProfile(f); err != nil {
+			log.Fatal("could not write memory profile: ", err)
+		}
+	}
 }

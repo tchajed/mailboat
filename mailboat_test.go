@@ -1,19 +1,18 @@
 package mailboat
 
 import (
-	"testing"
-
-	"github.com/stretchr/testify/suite"
-	"github.com/tchajed/goose/machine/filesys"
-
-	"github.com/tchajed/mailboat/globals"
-
 	"fmt"
 	"math/rand"
 	"os"
 	"strconv"
 	"sync"
+	"testing"
 	"time"
+
+	"github.com/stretchr/testify/suite"
+	"github.com/tchajed/goose/machine/filesys"
+
+	"github.com/tchajed/mailboat/globals"
 )
 
 type MailboatSuite struct {
@@ -26,12 +25,8 @@ func (suite *MailboatSuite) SetupTest() {
 	for uid := uint64(0); uid < NumUsers; uid++ {
 		filesys.Fs.Mkdir(GetUserDir(uid))
 	}
-
-	Open()
-}
-
-func (suite *MailboatSuite) TearDownTest() {
-	globals.Shutdown()
+	// note that mailboat remains initialized across tests;
+	// this makes test dependent if they acquire but do not release locks
 }
 
 func TestMailboatSuite(t *testing.T) {
@@ -118,7 +113,8 @@ func (suite *MailboatSuite) TestRecoverQuiescent() {
 	suite.MessagesMatch([][]byte{msg1, msg2}, suite.pickup(0))
 	globals.Shutdown()
 	Recover()
-	Open()
+	// need to re-open because we've faked a re-initialization
+	open()
 	suite.MessagesMatch([][]byte{msg1, msg2}, suite.pickup(0))
 }
 
@@ -150,8 +146,6 @@ func TestMixedLoad(t *testing.T) {
 	for uid := uint64(0); uid < NumUsers; uid++ {
 		filesys.Fs.Mkdir(GetUserDir(uid))
 	}
-
-	Open()
 
 	nprocEnv := os.Getenv("GOMAIL_NPROC")
 	if nprocEnv == "" {

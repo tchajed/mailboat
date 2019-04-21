@@ -314,8 +314,6 @@ func main() {
 		filesys.Fs.Mkdir(mailboat.GetUserDir(uid))
 	}
 
-	mailboat.Open()
-
 	go smtp()
 	pop()
 }

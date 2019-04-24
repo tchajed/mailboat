@@ -151,7 +151,7 @@ func Unlock(user uint64) {
 	l.Unlock()
 }
 
-func open() {
+func Open() {
 	locks := new([]*sync.RWMutex)
 	initLocks := make([]*sync.RWMutex, 0)
 	*locks = initLocks
@@ -168,10 +168,6 @@ func open() {
 	}
 	finalLocks := *locks
 	globals.SetX(finalLocks)
-}
-
-func init() {
-	open()
 }
 
 func Recover() {

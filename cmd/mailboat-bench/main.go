@@ -48,6 +48,7 @@ func main() {
 	for uid := uint64(0); uid < mailboat.NumUsers; uid++ {
 		filesys.Fs.Mkdir(mailboat.GetUserDir(uid))
 	}
+	mailboat.Open()
 
 	nprocEnv := os.Getenv("GOMAIL_NPROC")
 	if nprocEnv == "" {

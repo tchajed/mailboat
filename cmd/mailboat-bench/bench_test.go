@@ -16,6 +16,7 @@ func TestBenchLoop(t *testing.T) {
 	for uid := uint64(0); uid < mailboat.NumUsers; uid++ {
 		filesys.Fs.Mkdir(mailboat.GetUserDir(uid))
 	}
+	mailboat.Open()
 
 	var wg sync.WaitGroup
 	niter := 100

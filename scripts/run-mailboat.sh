@@ -5,6 +5,12 @@ cd "$DIR/.." || exit
 
 NPROC=$1
 NMSG=100000
+
+if [ -z "$NPROC" ]; then
+    echo "Usage $0 <nproc>" 1>&2
+    exit 1
+fi
+
 N=$(($NMSG * $NPROC))
 TIMEFORMAT='real %R nuser %U sys %S (s)'
 echo "== gomail $NPROC $NMSG $N `date` == "

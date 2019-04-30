@@ -16,7 +16,7 @@ import (
 	"unicode/utf8"
 )
 
-// A go mail server that is equivalent to gomain from cspec
+// A go mail server that is equivalent to gomail from cspec
 
 func nameToU(u string) uint64 {
 	_, s := utf8.DecodeRuneInString("u")

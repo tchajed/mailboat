@@ -1,4 +1,4 @@
-package main
+package server
 
 import (
 	"github.com/tchajed/goose/machine/filesys"
@@ -10,7 +10,6 @@ import (
 	"log"
 	"net"
 	"net/textproto"
-	"os"
 	"strconv"
 	"strings"
 	"unicode/utf8"
@@ -305,10 +304,10 @@ func pop() {
 	}
 }
 
-func main() {
-	os.RemoveAll("/tmp/mailboat")
-	os.MkdirAll("/tmp/mailboat", 0744)
-	filesys.Fs = filesys.NewDirFs("/tmp/mailboat/")
+// Start starts accepting connections and processing SMTP and POP3 requests.
+//
+// Before calling Start, set up the filesystem by initializing filesys.Fs.
+func Start() {
 	filesys.Fs.Mkdir(mailboat.SpoolDir)
 	for uid := uint64(0); uid < mailboat.NumUsers; uid++ {
 		filesys.Fs.Mkdir(mailboat.GetUserDir(uid))

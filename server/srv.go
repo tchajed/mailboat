@@ -12,14 +12,16 @@ import (
 	"net/textproto"
 	"strconv"
 	"strings"
-	"unicode/utf8"
 )
 
 // A go mail server that is equivalent to gomail from cspec
 
 func nameToU(u string) uint64 {
-	_, s := utf8.DecodeRuneInString("u")
-	i, err := strconv.ParseUint(u[s:], 10, 64)
+	prefix := "user"
+	if len(u) < len(prefix) {
+		panic(fmt.Sprintf("%s is not a valid user name", u))
+	}
+	i, err := strconv.ParseUint(u[len(prefix):], 10, 64)
 	if err != nil {
 		panic(err)
 	}
@@ -91,18 +93,14 @@ func process_smtp(c net.Conn, tid int) {
 		case "MAIL":
 			reply(c, "250 OK")
 		case "RCPT":
-			if len(words) < 2 || msg == nil {
+			if len(words) < 3 || msg == nil {
 				reply(c, "500 incorrect RCPT or no HELO")
 				break
 			}
-			u := strings.Split(words[1], ":")
-			if len(u) < 2 {
-				reply(c, "500 No user")
-				break
-			}
-			u[1] = strings.Replace(u[1], "<", "", -1)
-			u[1] = strings.Replace(u[1], ">", "", -1)
-			msg.To = u[1]
+			u := words[2]
+			u = strings.Replace(u, "<", "", -1)
+			u = strings.Replace(u, ">", "", -1)
+			msg.To = u
 			reply(c, "250 OK")
 		case "DATA":
 			reply(c, "354 Proceed with data")

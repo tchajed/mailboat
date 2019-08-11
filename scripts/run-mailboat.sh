@@ -20,7 +20,7 @@ echo "== mailboat $NPROC $NMSG $N `date` == "
 for i in `seq 1 $NPROC`;
 do
     echo "== mailboat $i $((N / i))"
-    ( GOMAIL_NPROC=$i GOMAIL_NITER=$((N / i)) /tmp/mailboat-bench)
+    ( GOMAIL_NPROC=$i GOMAIL_NITER=$((N / i)) time /tmp/mailboat-bench)
     sleep 1
 done
 rm /tmp/mailboat-bench

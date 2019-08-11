@@ -39,6 +39,7 @@ func do_bench_loop(tid int, msg string, niter int, nsmtpiter int, npopiter int) 
 
 var cpuprofile = flag.String("cpuprofile", "", "write cpu profile to `file`")
 var memprofile = flag.String("memprofile", "", "write memory profile to `file`")
+var verbose = flag.Bool("verbose", false, "print timing information to stdout")
 
 func main() {
 	os.RemoveAll("/tmp/mailboat")
@@ -100,7 +101,9 @@ func main() {
 
 	end := time.Now()
 	elapsed := end.Sub(start)
-	fmt.Printf("%d threads, %d iter, %v elapsed\n", nproc, niter, elapsed)
+	if *verbose {
+		fmt.Printf("%d threads, %d iter, %v elapsed\n", nproc, niter, elapsed)
+	}
 
 	if *memprofile != "" {
 		f, err := os.Create(*memprofile)

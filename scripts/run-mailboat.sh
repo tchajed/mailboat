@@ -13,11 +13,11 @@ if [ -z "$NPROC" ]; then
     exit 1
 fi
 
-N=$(($NMSG * $NPROC))
+N=$((NMSG * NPROC))
 TIMEFORMAT='real %R nuser %U sys %S (s)'
 go build -o /tmp/mailboat-bench ./cmd/mailboat-bench/main.go
-echo "== mailboat $NPROC $NMSG $N `date` == "
-for i in `seq 1 $NPROC`;
+echo "== mailboat $NPROC $NMSG $N $(date) == "
+for i in $(seq 1 "$NPROC")
 do
     echo "== mailboat $i $((N / i))"
     time ( GOMAIL_NPROC=$i GOMAIL_NITER=$((N / i)) /tmp/mailboat-bench)

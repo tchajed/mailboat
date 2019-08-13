@@ -12,8 +12,10 @@ import (
 var recover = flag.Bool("recover", false, "recover existing mailboxes rather than initialize")
 
 func main() {
+	flag.Parse()
 	initialize := !*recover
 	if initialize {
+		fmt.Println("initializing mailboxes")
 		os.RemoveAll("/tmp/mailboat")
 		os.MkdirAll("/tmp/mailboat", 0744)
 	}

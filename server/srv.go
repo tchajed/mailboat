@@ -189,10 +189,14 @@ func send_data(tw *textproto.Writer, c string) bool {
 	data := []byte(c)
 	tw.PrintfLine("+OK %d octets", len(data))
 	dwr := tw.DotWriter()
-	_, err := dwr.Write(data)
+	n, err := dwr.Write(data)
 	if err != nil {
 		return false
 	}
+	if n < len(data) {
+		fmt.Printf("short write: %d/%d bytes\n", n, len(data))
+	}
+	dwr.Write([]byte("\n"))
 	err = dwr.Close()
 	if err != nil {
 		return false
@@ -220,7 +224,7 @@ func process_pop(c net.Conn, tid int) {
 		}
 
 		words := strings.Fields(line)
-		fmt.Printf("msg: %v\n", words)
+		fmt.Printf("msg %d: %v\n", tid, words)
 		if len(words) <= 0 {
 			tw.PrintfLine("-ERR")
 			break

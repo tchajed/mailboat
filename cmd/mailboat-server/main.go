@@ -1,6 +1,7 @@
 package main
 
 import (
+	"flag"
 	"fmt"
 	"os"
 
@@ -8,10 +9,15 @@ import (
 	"github.com/tchajed/mailboat/server"
 )
 
+var recover = flag.Bool("recover", false, "recover existing mailboxes rather than initialize")
+
 func main() {
-	os.RemoveAll("/tmp/mailboat")
-	os.MkdirAll("/tmp/mailboat", 0744)
+	initialize := !*recover
+	if initialize {
+		os.RemoveAll("/tmp/mailboat")
+		os.MkdirAll("/tmp/mailboat", 0744)
+	}
 	filesys.Fs = filesys.NewDirFs("/tmp/mailboat/")
 	fmt.Println("listening on localhost:2110 (POP3) and localhost:2525 (SMTP)")
-	server.Start()
+	server.Start(initialize)
 }

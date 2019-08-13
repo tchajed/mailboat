@@ -16,16 +16,16 @@ import (
 
 // A go mail server that is equivalent to gomail from cspec
 
-func nameToU(u string) uint64 {
+func nameToU(u string) (uint64, error) {
 	prefix := "user"
-	if len(u) < len(prefix) {
-		panic(fmt.Sprintf("%s is not a valid user name", u))
+	if !strings.HasPrefix(u, prefix) {
+		return 0, fmt.Errorf("username %s does not start with \"user\"", u)
 	}
 	i, err := strconv.ParseUint(u[len(prefix):], 10, 64)
-	if err != nil {
-		panic(err)
+	if err != nil || i >= mailboat.NumUsers {
+		return 0, fmt.Errorf("username %s does not have a valid number", u)
 	}
-	return i
+	return i, err
 }
 
 type Message struct {
@@ -53,7 +53,11 @@ func (msg *Message) process_msg(tid int) error {
 	}
 	b := buffer.Bytes()
 
-	mailboat.Deliver(nameToU(msg.To), b)
+	uid, err := nameToU(msg.To)
+	if err != nil {
+		return err
+	}
+	mailboat.Deliver(uid, b)
 	return nil
 }
 
@@ -150,7 +154,10 @@ type mailbox struct {
 }
 
 func mkMailbox(u string) (*mailbox, error) {
-	userId := nameToU(u)
+	userId, err := nameToU(u)
+	if err != nil {
+		return nil, err
+	}
 	mbox := &mailbox{u: u, id: userId, msgs: mailboat.Pickup(userId)}
 	return mbox, nil
 }
@@ -206,6 +213,7 @@ func process_pop(c net.Conn, tid int) {
 	for {
 		line, err := tr.ReadLine()
 		if err != nil {
+			fmt.Printf("err: reading %v\n", err)
 			tw.PrintfLine("-ERR")
 			break
 		}
@@ -217,7 +225,12 @@ func process_pop(c net.Conn, tid int) {
 			break
 		}
 
-		switch words[0] {
+		command := strings.ToUpper(words[0])
+		switch command {
+		case "CAPA":
+			tw.PrintfLine("+OK")
+			tw.PrintfLine("USER")
+			tw.PrintfLine(".")
 		case "USER":
 			if len(words) < 2 {
 				tw.PrintfLine("-ERR")
@@ -233,6 +246,12 @@ func process_pop(c net.Conn, tid int) {
 				break
 			}
 			tw.PrintfLine("+OK")
+		case "PASS":
+			if len(words) < 2 {
+				tw.PrintfLine("-ERR")
+				// any password is ok
+				tw.PrintfLine("+OK")
+			}
 		case "LIST":
 			if mbox == nil {
 				tw.PrintfLine("-ERR readdir")
@@ -257,33 +276,34 @@ func process_pop(c net.Conn, tid int) {
 			ok = send_data(tw, msg.Contents)
 			if !ok {
 				tw.PrintfLine("-ERR data")
-				break
+				return
 			}
 		case "DELE":
 			if mbox == nil {
 				tw.PrintfLine("-ERR mbox")
-				break
+				return
 			}
 
 			msg, ok := mbox.i2msg(words)
 			if !ok {
 				tw.PrintfLine("-ERR file")
-				break
+				return
 			}
 			mbox.dele(msg)
-			if err != nil {
-				tw.PrintfLine("-ERR remove")
-				break
-			}
 			tw.PrintfLine("+OK")
 		case "QUIT":
-			mbox.unlock()
+			if mbox != nil {
+				mbox.unlock()
+			}
 			tw.PrintfLine("+OK")
-			break
+			return
 		default:
-			mbox.unlock()
+			if mbox != nil {
+				mbox.unlock()
+			}
+			fmt.Println("err: unknown command", command)
 			tw.PrintfLine("-ERR")
-			break
+			return
 		}
 	}
 }
@@ -310,6 +330,7 @@ func Start() {
 	for uid := uint64(0); uid < mailboat.NumUsers; uid++ {
 		filesys.Fs.Mkdir(mailboat.GetUserDir(uid))
 	}
+	mailboat.Open()
 
 	go smtp()
 	pop()

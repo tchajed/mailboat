@@ -50,6 +50,7 @@ func (msg *Message) process_msg(tid int) error {
 	var buffer bytes.Buffer
 	for _, s := range msg.Data {
 		buffer.WriteString(s)
+		buffer.WriteString("\n")
 	}
 	b := buffer.Bytes()
 
@@ -186,7 +187,7 @@ func (mbox *mailbox) dele(m *mailboat.Message) {
 
 func send_data(tw *textproto.Writer, c string) bool {
 	data := []byte(c)
-	tw.PrintfLine("+OK")
+	tw.PrintfLine("+OK %d octets", len(data))
 	dwr := tw.DotWriter()
 	_, err := dwr.Write(data)
 	if err != nil {

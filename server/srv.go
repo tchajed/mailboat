@@ -325,12 +325,16 @@ func pop() {
 // Start starts accepting connections and processing SMTP and POP3 requests.
 //
 // Before calling Start, set up the filesystem by initializing filesys.Fs.
-func Start() {
-	filesys.Fs.Mkdir(mailboat.SpoolDir)
-	for uid := uint64(0); uid < mailboat.NumUsers; uid++ {
-		filesys.Fs.Mkdir(mailboat.GetUserDir(uid))
+func Start(init bool) {
+	if init {
+		filesys.Fs.Mkdir(mailboat.SpoolDir)
+		for uid := uint64(0); uid < mailboat.NumUsers; uid++ {
+			filesys.Fs.Mkdir(mailboat.GetUserDir(uid))
+		}
+		mailboat.Open()
+	} else {
+		mailboat.Recover()
 	}
-	mailboat.Open()
 
 	go smtp()
 	pop()

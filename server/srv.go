@@ -5,7 +5,6 @@ import (
 	"github.com/tchajed/mailboat"
 
 	"bufio"
-	"bytes"
 	"fmt"
 	"log"
 	"net"
@@ -32,7 +31,7 @@ type Message struct {
 	Client string
 	From   string
 	To     string
-	Data   []string
+	Data   []byte
 }
 
 func reply(c net.Conn, format string, elems ...interface{}) {
@@ -45,14 +44,13 @@ func reply(c net.Conn, format string, elems ...interface{}) {
 	}
 }
 
+func (msg *Message) debugString() string {
+	return fmt.Sprintf("from: %s to: %s len: %d", msg.From, msg.To, len(msg.Data))
+}
+
 func (msg *Message) process_msg(tid int) error {
-	fmt.Printf("process msg %v tid %v\n", msg, tid)
-	var buffer bytes.Buffer
-	for _, s := range msg.Data {
-		buffer.WriteString(s)
-		buffer.WriteString("\n")
-	}
-	b := buffer.Bytes()
+	fmt.Printf("process msg %s tid %v\n", msg.debugString(), tid)
+	b := msg.Data
 
 	uid, err := nameToU(msg.To)
 	if err != nil {
@@ -62,12 +60,12 @@ func (msg *Message) process_msg(tid int) error {
 	return nil
 }
 
-func process_data(tp *textproto.Reader) (error, []string) {
-	lines, err := tp.ReadDotLines()
+func process_data(tp *textproto.Reader) (error, []byte) {
+	data, err := tp.ReadDotBytes()
 	if err != nil {
 		return err, nil
 	}
-	return nil, lines
+	return nil, data
 }
 
 func process_smtp(c net.Conn, tid int) {
@@ -109,12 +107,12 @@ func process_smtp(c net.Conn, tid int) {
 			reply(c, "250 OK")
 		case "DATA":
 			reply(c, "354 Proceed with data")
-			err, lines := process_data(tp)
+			err, data := process_data(tp)
 			if err != nil || msg == nil {
 				reply(c, "500 Error process_data")
 				break
 			}
-			msg.Data = lines
+			msg.Data = data
 			err = msg.process_msg(tid)
 			if err != nil {
 				reply(c, "500 Error process_msg")

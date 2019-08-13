@@ -249,9 +249,9 @@ func process_pop(c net.Conn, tid int) {
 		case "PASS":
 			if len(words) < 2 {
 				tw.PrintfLine("-ERR")
-				// any password is ok
-				tw.PrintfLine("+OK")
 			}
+			// any password is ok
+			tw.PrintfLine("+OK")
 		case "LIST":
 			if mbox == nil {
 				tw.PrintfLine("-ERR readdir")
@@ -333,6 +333,7 @@ func Start(init bool) {
 		}
 		mailboat.Open()
 	} else {
+		mailboat.Open()
 		mailboat.Recover()
 	}
 

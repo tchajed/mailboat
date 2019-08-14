@@ -157,8 +157,19 @@ func mkMailbox(u string) (*mailbox, error) {
 	if err != nil {
 		return nil, err
 	}
-	mbox := &mailbox{u: u, id: userId, msgs: mailboat.Pickup(userId)}
+	mbox := &mailbox{u: u, id: userId}
 	return mbox, nil
+}
+
+func (mbox *mailbox) pickup() {
+	if mbox.msgs == nil {
+		mbox.msgs = mailboat.Pickup(mbox.id)
+		mbox.unlock()
+	}
+}
+
+func (mbox *mailbox) lock() {
+	mailboat.Lock(mbox.id)
 }
 
 func (mbox *mailbox) unlock() {
@@ -173,6 +184,7 @@ func (mbox *mailbox) i2msg(words []string) (*mailboat.Message, bool) {
 	if err != nil {
 		return nil, false
 	}
+	mbox.pickup()
 	if len(mbox.msgs) < i+1 {
 		return nil, false
 	}
@@ -180,6 +192,8 @@ func (mbox *mailbox) i2msg(words []string) (*mailboat.Message, bool) {
 }
 
 func (mbox *mailbox) dele(m *mailboat.Message) {
+	mbox.lock()
+	defer mbox.unlock()
 	mailboat.Delete(mbox.id, m.Id)
 }
 
@@ -194,7 +208,6 @@ func send_data(tw *textproto.Writer, c string) bool {
 	if n < len(data) {
 		fmt.Printf("short write: %d/%d bytes\n", n, len(data))
 	}
-	dwr.Write([]byte("\n"))
 	err = dwr.Close()
 	if err != nil {
 		return false
@@ -214,6 +227,7 @@ func process_pop(c net.Conn, tid int) {
 	tw.PrintfLine("+OK")
 
 	for {
+		writer.Flush()
 		line, err := tr.ReadLine()
 		if err != nil {
 			fmt.Printf("err: reading %v\n", err)
@@ -261,6 +275,7 @@ func process_pop(c net.Conn, tid int) {
 				break
 			}
 			tw.PrintfLine("+OK")
+			mbox.pickup()
 			for i, msg := range mbox.msgs {
 				tw.PrintfLine("%d %d", i, len(msg.Contents))
 			}
@@ -295,15 +310,9 @@ func process_pop(c net.Conn, tid int) {
 			mbox.dele(msg)
 			tw.PrintfLine("+OK")
 		case "QUIT":
-			if mbox != nil {
-				mbox.unlock()
-			}
 			tw.PrintfLine("+OK")
 			return
 		default:
-			if mbox != nil {
-				mbox.unlock()
-			}
 			fmt.Println("err: unknown command", command)
 			tw.PrintfLine("-ERR")
 			return

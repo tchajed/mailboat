@@ -2,12 +2,12 @@ package globals
 
 import "sync"
 
-var locks []*sync.RWMutex
+var locks []*sync.Mutex
 
 // SetX initializes the global locks to a particular value.
 //
 // SetX can only be called once.
-func SetX(x []*sync.RWMutex) {
+func SetX(x []*sync.Mutex) {
 	if locks != nil {
 		panic("globals can only be set once for thread safety reasons")
 	}
@@ -15,7 +15,7 @@ func SetX(x []*sync.RWMutex) {
 }
 
 // GetX gets the current set of locks.
-func GetX() []*sync.RWMutex {
+func GetX() []*sync.Mutex {
 	if locks == nil {
 		panic("attempt to get uninitialized locks")
 	}
